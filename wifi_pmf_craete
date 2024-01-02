@@ -1,0 +1,46 @@
+write a python script to generate a WiFi packet with the Protected Management Frame filled in and "disabled"
+
+Creating a WiFi packet with a specific configuration like the Protected Management Frames (PMF) set to "disabled" involves working with network protocols and packet crafting. In Python, this can be achieved using libraries such as Scapy, a powerful interactive packet manipulation program that allows packet crafting and sending.
+
+Below is an example script that demonstrates how to create a basic WiFi packet with PMF set to "disabled". Note that this script is for educational purposes and should be used responsibly and legally. Unauthorized network packet manipulation or network scanning can be illegal and unethical.
+
+First, you need to install Scapy. You can do this via pip:
+
+pip install scapy
+
+Then, you can use the following script to create a WiFi packet:
+
+from scapy.all import *
+
+def create_wifi_packet(ssid, interface):
+    # Create a RadioTap header
+    radio = RadioTap()
+
+    # Create a Dot11 (802.11) header
+    dot11 = Dot11(type=0, subtype=8, addr1="ff:ff:ff:ff:ff:ff",
+                  addr2="aa:bb:cc:dd:ee:ff", addr3="aa:bb:cc:dd:ee:ff")
+
+    # Create a Dot11Beacon layer
+    beacon = Dot11Beacon(cap='ESS+privacy')
+
+    # Add information elements: SSID and RSN (to specify PMF settings)
+    ssid = Dot11Elt(ID='SSID', info=ssid)
+    rsn = Dot11Elt(ID='RSNinfo', info=(
+        '\x01\x00'              # RSN Version 1
+        '\x00\x0f\xac\x02'      # Group Cipher Suite: 00-0F-AC TKIP
+        '\x02\x00'              # 2 Pairwise Cipher Suites (next two lines)
+        '\x00\x0f\xac\x04'      # AES Cipher
+        '\x00\x0f\xac\x02'      # TKIP Cipher
+        '\x01\x00'              # 1 Authentication Key Management Suite (line below)
+        '\x00\x0f\xac\x02'      # Pre-Shared Key
+        '\x00\x00'))            # RSN Capabilities (PMF disabled)
+
+    # Stack all the layers
+    packet = radio / dot11 / beacon / ssid / rsn
+
+    # Send the packet
+    sendp(packet, iface=interface)
+
+# Example usage
+create_wifi_packet("ExampleSSID", "wlan0")
+This script creates a WiFi beacon frame with the SSID "ExampleSSID" and PMF disabled. The packet is sent via the specified wireless interface (e.g., "wlan0"). Make sure to replace "ExampleSSID" and "wlan0" with your desired SSID and wireless interface name, respectively. Also, ensure you have the necessary permissions to send packets on the network interface.
